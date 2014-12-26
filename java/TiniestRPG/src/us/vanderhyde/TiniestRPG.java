@@ -11,7 +11,8 @@ public class TiniestRPG
 {
     public static void main(String[] args)
     {
-        
+        String ip = IPAddress.getHostAddress();
+        System.out.println(ip);
     }
-    
+
 }
