@@ -1,4 +1,4 @@
-//Find the IP address of the local machine
+//A utility class to find the IP address of the local machine
 //Created by James Vanderhyde, 26 December 2014
 
 package us.vanderhyde;
@@ -62,7 +62,7 @@ public class IPAddress
     }
     
     /**
-     * 
+     * Tries to find a host address using InetAddress.
      * @return A string representation of an IP address.
      */
     public static String getHostAddressFromJava()

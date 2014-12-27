@@ -11,8 +11,18 @@ public class TiniestRPG
 {
     public static void main(String[] args)
     {
-        String ip = IPAddress.getHostAddress();
-        System.out.println(ip);
+        Database db = new Database();
+        int question;
+        
+        question = db.startNewGame(IPAddress.getHostAddress());
+        while (question >= 0)
+        {
+            question = db.askNextQuestion(question);
+        }
+        
+        db.displayResult();
+        
+        db.close();
     }
 
 }
