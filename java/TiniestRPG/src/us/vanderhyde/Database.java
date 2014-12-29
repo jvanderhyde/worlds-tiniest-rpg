@@ -77,34 +77,39 @@ public class Database
                     throw new RuntimeException("Error inserting new game into database.");
             }
             
-            PreparedStatement intro = conn.prepareStatement(
-                    "SELECT Text, Next "
-                  + "FROM Question "
-                  + "WHERE Name = 'INTRO' ");
-            int nextQuestionID;
-            String introMessage;
-            try (ResultSet introResult = intro.executeQuery())
-            {
-                if (introResult.next())
-                {
-                    introMessage = introResult.getString("Text");
-                    nextQuestionID = introResult.getInt("Next");
-                }
-                else
-                {
-                    System.out.println(intro.toString());
-                    throw new RuntimeException("Error accessing database intro text.");
-                }
-            }
-            
-            System.out.println(introMessage);
-            return nextQuestionID;
+            return askFirstQuestion();
         }
         catch (SQLException e)
         {
             System.out.println(e);
             throw new RuntimeException("Error accessing database intro text.");
         }
+    }
+
+    private int askFirstQuestion() throws SQLException, RuntimeException
+    {
+        PreparedStatement intro = conn.prepareStatement(
+                "SELECT Text, Next "
+                        + "FROM Question "
+                        + "WHERE Name = 'INTRO' ");
+        int nextQuestionID;
+        String introMessage;
+        try (ResultSet introResult = intro.executeQuery())
+        {
+            if (introResult.next())
+            {
+                introMessage = introResult.getString("Text");
+                nextQuestionID = introResult.getInt("Next");
+            }
+            else
+            {
+                System.out.println(intro.toString());
+                throw new RuntimeException("Error accessing database intro text.");
+            }
+        }
+        
+        System.out.println(introMessage);
+        return nextQuestionID;
     }
 
     int askNextQuestion(int questionID)
@@ -195,33 +200,22 @@ public class Database
     {
         try
         {
-            PreparedStatement p = conn.prepareStatement(
+            PreparedStatement points = conn.prepareStatement(
                     "SELECT Result, SUM(Pts) AS TotalPts " +
                     "FROM CompletedQuestion AS C, Question AS Q " +
                     "WHERE C.GameID = ? " +
                     "AND CompletedQ = Q.ID " +
-                    "GROUP BY Result");
-            p.clearParameters();
-            p.setInt(1, this.playerID);
-            Map<Integer,Integer> results = new HashMap<>();
-            try (ResultSet questionResult = p.executeQuery())
+                    "GROUP BY Result " +
+                    "ORDER BY TotalPts DESC");
+            points.clearParameters();
+            points.setInt(1, this.playerID);
+            int maxResult;
+            try (ResultSet questionResult = points.executeQuery())
             {
-                while (questionResult.next())
-                {
-                    results.put(questionResult.getInt("Result"), questionResult.getInt("TotalPts"));
-                }
-            }
-            
-            int max = 0;
-            Integer maxkey = null;
-            for (Integer key : results.keySet())
-            {
-                int val = results.get(key);
-                if (val > max)
-                {
-                    max = val;
-                    maxkey = key;
-                }
+                if (questionResult.next())
+                    maxResult = questionResult.getInt("Result");
+                else
+                    throw new RuntimeException("Error accessing database: no results.");
             }
             
             PreparedStatement result = conn.prepareStatement(
@@ -229,16 +223,14 @@ public class Database
                   + "FROM Result "
                   + "WHERE ID = ? ");
             result.clearParameters();
-            result.setInt(1, maxkey);
+            result.setInt(1, maxResult);
             String resultMessage;
             try (ResultSet resultResult = result.executeQuery())
             {
                 if (resultResult.next())
-                {
                     resultMessage = resultResult.getString("Text");
-                }
                 else
-                    throw new RuntimeException("Error accessing database result "+maxkey);
+                    throw new RuntimeException("Error accessing database result "+maxResult);
             }
             System.out.println(resultMessage);
             
@@ -248,8 +240,15 @@ public class Database
             gameComplete.clearParameters();
             gameComplete.setInt(1, this.playerID);
             gameComplete.setString(2, this.playerIP);
-            gameComplete.setInt(3, maxkey);
+            gameComplete.setInt(3, maxResult);
             gameComplete.executeUpdate();
+
+            PreparedStatement deleteIncomplete = conn.prepareStatement(
+                    "DELETE FROM IncompleteGame "
+                  + "WHERE ID = ?");
+            deleteIncomplete.clearParameters();
+            deleteIncomplete.setInt(1, this.playerID);
+            deleteIncomplete.executeUpdate();
         }
         catch (SQLException e)
         {
@@ -258,9 +257,70 @@ public class Database
         }
     }
 
-    int checkForIncompleteGame(String host)
+    int checkForIncompleteGame(String ip)
     {
-        return -1;
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        this.playerIP = ip;
+        try
+        {
+            PreparedStatement incompleteGames = conn.prepareStatement(
+                    "SELECT ID "
+                  + "FROM IncompleteGame "
+                  + "WHERE IPAddr = ? "
+                  + "AND ID NOT IN "
+                  + " (SELECT ID "
+                  + "  FROM CompletedGame "
+                  + "  WHERE IPAddr = ?)");
+            incompleteGames.clearParameters();
+            incompleteGames.setString(1, ip);
+            incompleteGames.setString(2, ip);
+            int gameID;
+            try (ResultSet resultResult = incompleteGames.executeQuery())
+            {
+                if (resultResult.next())
+                    gameID = resultResult.getInt("ID");
+                else
+                    gameID = -1;
+            }
+            
+            if (gameID < 0)
+                return -1;
+            else
+                this.playerID = gameID;
+            
+            PreparedStatement completedQuestions = conn.prepareStatement(
+                    "SELECT ID \n" +
+                    "FROM Question \n" +
+                    "WHERE ID NOT IN \n" +
+                    " (SELECT Q.ID \n" +
+                    "  FROM CompletedQuestion AS C, Question AS Q \n" +
+                    "  WHERE C.GameID = ? \n" +
+                    "  AND CompletedQ = Q.ID) \n" +
+                    "AND ID IN \n" +
+                    " (SELECT Q.Next \n" +
+                    "  FROM CompletedQuestion AS C, Question AS Q \n" +
+                    "  WHERE C.GameID = ? \n" +
+                    "  AND CompletedQ = Q.ID)");
+            completedQuestions.clearParameters();
+            completedQuestions.setInt(1, gameID);
+            completedQuestions.setInt(2, gameID);
+            int nextQuestion;
+            try (ResultSet resultResult = completedQuestions.executeQuery())
+            {
+                if (resultResult.next())
+                    nextQuestion = resultResult.getInt("ID");
+                else
+                    nextQuestion = -1;
+            }
+
+            if (nextQuestion < 0)
+                return askFirstQuestion();
+            else
+                return nextQuestion;
+        }
+        catch (SQLException e)
+        {
+            System.out.println(e);
+            throw new RuntimeException("Error accessing database for final result.");
+        }
     }
 }
