@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Dec 26, 2014 at 09:19 PM
+-- Generation Time: Dec 29, 2014 at 02:36 PM
 -- Server version: 5.6.22
 -- PHP Version: 5.5.14
 
@@ -42,12 +42,24 @@ CREATE TABLE IF NOT EXISTS `CompletedGame` (
 
 CREATE TABLE IF NOT EXISTS `CompletedQuestion` (
   `ID` int(11) NOT NULL,
-  `FBID` int(11) DEFAULT NULL,
-  `IPAddr` varchar(255) DEFAULT NULL,
+  `GameID` int(11) NOT NULL,
   `DatePlayed` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `CompletedQ` int(11) NOT NULL,
-  `Result` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  `Result` int(11) DEFAULT NULL
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `IncompleteGame`
+--
+
+CREATE TABLE IF NOT EXISTS `IncompleteGame` (
+  `ID` int(11) NOT NULL,
+  `FBID` int(11) DEFAULT NULL,
+  `IPAddr` varchar(255) DEFAULT NULL,
+  `Date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -150,6 +162,12 @@ ALTER TABLE `CompletedGame`
 -- Indexes for table `CompletedQuestion`
 --
 ALTER TABLE `CompletedQuestion`
+  ADD PRIMARY KEY (`ID`), ADD KEY `GameID` (`GameID`);
+
+--
+-- Indexes for table `IncompleteGame`
+--
+ALTER TABLE `IncompleteGame`
   ADD PRIMARY KEY (`ID`);
 
 --
@@ -175,15 +193,15 @@ ALTER TABLE `Result`
 --
 
 --
--- AUTO_INCREMENT for table `CompletedGame`
---
-ALTER TABLE `CompletedGame`
-  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT;
---
 -- AUTO_INCREMENT for table `CompletedQuestion`
 --
 ALTER TABLE `CompletedQuestion`
-  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=34;
+--
+-- AUTO_INCREMENT for table `IncompleteGame`
+--
+ALTER TABLE `IncompleteGame`
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=4;
 --
 -- AUTO_INCREMENT for table `Question`
 --
@@ -197,6 +215,12 @@ ALTER TABLE `Result`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `CompletedQuestion`
+--
+ALTER TABLE `CompletedQuestion`
+ADD CONSTRAINT `completedquestion_ibfk_1` FOREIGN KEY (`GameID`) REFERENCES `IncompleteGame` (`ID`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `QuestionResponse`

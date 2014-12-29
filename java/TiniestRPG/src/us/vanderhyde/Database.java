@@ -62,17 +62,31 @@ public class Database
         this.playerIP = ip;
         try
         {
+            PreparedStatement p = conn.prepareStatement(
+                    "INSERT INTO IncompleteGame (IPAddr) "
+                  + "VALUES (?)",Statement.RETURN_GENERATED_KEYS);
+            p.clearParameters();
+            p.setString(1, ip);
+            p.executeUpdate();
+            
+            try (ResultSet insertResult = p.getGeneratedKeys())
+            {
+                if (insertResult.next())
+                    this.playerID = insertResult.getInt(1);
+                else
+                    throw new RuntimeException("Error inserting new game into database.");
+            }
+            
             PreparedStatement intro = conn.prepareStatement(
-                    "SELECT ID, Text, Next "
+                    "SELECT Text, Next "
                   + "FROM Question "
                   + "WHERE Name = 'INTRO' ");
-            int introID, nextQuestionID;
+            int nextQuestionID;
             String introMessage;
             try (ResultSet introResult = intro.executeQuery())
             {
                 if (introResult.next())
                 {
-                    introID = introResult.getInt("ID");
                     introMessage = introResult.getString("Text");
                     nextQuestionID = introResult.getInt("Next");
                 }
@@ -81,22 +95,6 @@ public class Database
                     System.out.println(intro.toString());
                     throw new RuntimeException("Error accessing database intro text.");
                 }
-            }
-            
-            PreparedStatement p = conn.prepareStatement(
-                    "INSERT INTO CompletedQuestion (IPAddr, CompletedQ) "
-                  + "VALUES (?,?)",Statement.RETURN_GENERATED_KEYS);
-            p.clearParameters();
-            p.setString(1, ip);
-            p.setInt(2, introID);
-            p.executeUpdate();
-            
-            try (ResultSet insertResult = p.getGeneratedKeys())
-            {
-                if (insertResult.next())
-                    playerID = insertResult.getInt(1);
-                else
-                    throw new RuntimeException("Error inserting new game into database.");
             }
             
             System.out.println(introMessage);
@@ -161,10 +159,10 @@ public class Database
             int chosenResponse = permuted.get((int)(readUserChar(permuted)-'A'));
             
             PreparedStatement insertComplete = conn.prepareStatement(
-                    "INSERT INTO CompletedQuestion (IPAddr, CompletedQ, Result) "
+                    "INSERT INTO CompletedQuestion (GameID, CompletedQ, Result) "
                   + "VALUES (?,?,?)");
             insertComplete.clearParameters();
-            insertComplete.setString(1, this.playerIP);
+            insertComplete.setInt(1, this.playerID);
             insertComplete.setInt(2, questionID);
             insertComplete.setInt(3, chosenResponse);
             insertComplete.executeUpdate();
@@ -200,11 +198,11 @@ public class Database
             PreparedStatement p = conn.prepareStatement(
                     "SELECT Result, SUM(Pts) AS TotalPts " +
                     "FROM CompletedQuestion AS C, Question AS Q " +
-                    "WHERE C.IPAddr = ? " +
+                    "WHERE C.GameID = ? " +
                     "AND CompletedQ = Q.ID " +
                     "GROUP BY Result");
             p.clearParameters();
-            p.setString(1, this.playerIP);
+            p.setInt(1, this.playerID);
             Map<Integer,Integer> results = new HashMap<>();
             try (ResultSet questionResult = p.executeQuery())
             {
@@ -245,11 +243,12 @@ public class Database
             System.out.println(resultMessage);
             
             PreparedStatement gameComplete = conn.prepareStatement(
-                    "INSERT INTO CompletedGame (IPAddr, Result) "
-                  + "VALUES (?,?)");
+                    "INSERT INTO CompletedGame (ID, IPAddr, Result) "
+                  + "VALUES (?,?,?)");
             gameComplete.clearParameters();
-            gameComplete.setString(1, this.playerIP);
-            gameComplete.setInt(2, maxkey);
+            gameComplete.setInt(1, this.playerID);
+            gameComplete.setString(2, this.playerIP);
+            gameComplete.setInt(3, maxkey);
             gameComplete.executeUpdate();
         }
         catch (SQLException e)
@@ -257,5 +256,11 @@ public class Database
             System.out.println(e);
             throw new RuntimeException("Error accessing database for final result.");
         }
+    }
+
+    int checkForIncompleteGame(String host)
+    {
+        return -1;
+        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

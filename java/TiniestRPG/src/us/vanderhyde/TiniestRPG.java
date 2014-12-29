@@ -14,7 +14,11 @@ public class TiniestRPG
         Database db = new Database();
         int question;
         
-        question = db.startNewGame(IPAddress.getHostAddress());
+        String host = IPAddress.getHostAddress();
+        question = db.checkForIncompleteGame(host);
+        if (question < 0)
+            question = db.startNewGame(host);
+        
         while (question >= 0)
         {
             question = db.askNextQuestion(question);
