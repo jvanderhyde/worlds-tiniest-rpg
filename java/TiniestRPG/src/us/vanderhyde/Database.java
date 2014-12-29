@@ -9,25 +9,22 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 /**
- * Maintains the connection to the database.
+ * Maintains the connection to the database and provides access to data.
  * @author James Vanderhyde
  */
 public class Database
 {
-    private Connection conn;
+    private final Connection conn;
     private int playerID;
-    private String playerIP;
+    private final String playerIP;
     
-    public Database()
+    public Database(String host)
     {
+        this.playerIP = host;
         try
         {
             conn = DriverManager.getConnection("jdbc:mysql://localhost/TINYRPG", "tiny", "N2VnVLPvrnqfGj7x");
@@ -57,16 +54,15 @@ public class Database
         }
     }
 
-    int startNewGame(String ip)
+    void startNewGame()
     {
-        this.playerIP = ip;
         try
         {
             PreparedStatement p = conn.prepareStatement(
                     "INSERT INTO IncompleteGame (IPAddr) "
                   + "VALUES (?)",Statement.RETURN_GENERATED_KEYS);
             p.clearParameters();
-            p.setString(1, ip);
+            p.setString(1, playerIP);
             p.executeUpdate();
             
             try (ResultSet insertResult = p.getGeneratedKeys())
@@ -76,8 +72,6 @@ public class Database
                 else
                     throw new RuntimeException("Error inserting new game into database.");
             }
-            
-            return askFirstQuestion();
         }
         catch (SQLException e)
         {
@@ -86,34 +80,44 @@ public class Database
         }
     }
 
-    private int askFirstQuestion() throws SQLException, RuntimeException
+    Question getFirstQuestion()
     {
-        PreparedStatement intro = conn.prepareStatement(
-                "SELECT Text, Next "
-                        + "FROM Question "
-                        + "WHERE Name = 'INTRO' ");
-        int nextQuestionID;
-        String introMessage;
-        try (ResultSet introResult = intro.executeQuery())
+        try
         {
-            if (introResult.next())
+            PreparedStatement intro = conn.prepareStatement(
+                    "SELECT Text, Next "
+                  + "FROM Question "
+                  + "WHERE Name = 'INTRO' ");
+            int nextQuestionID;
+            String introMessage;
+            try (ResultSet introResult = intro.executeQuery())
             {
-                introMessage = introResult.getString("Text");
-                nextQuestionID = introResult.getInt("Next");
+                if (introResult.next())
+                {
+                    introMessage = introResult.getString("Text");
+                    nextQuestionID = introResult.getInt("Next");
+                }
+                else
+                {
+                    System.out.println(intro.toString());
+                    throw new RuntimeException("Error accessing database intro text.");
+                }
             }
-            else
-            {
-                System.out.println(intro.toString());
-                throw new RuntimeException("Error accessing database intro text.");
-            }
+
+            return new Question(0,introMessage,nextQuestionID,null);
         }
-        
-        System.out.println(introMessage);
-        return nextQuestionID;
+        catch (SQLException e)
+        {
+            throw new RuntimeException("Error accessing database for intro");
+        }
     }
 
-    int askNextQuestion(int questionID)
+    Question getNextQuestion(int questionID)
     {
+        //When the ID is -1, there are no more questions.
+        if (questionID == -1)
+            return null;
+        
         try
         {
             PreparedStatement question = conn.prepareStatement(
@@ -152,17 +156,18 @@ public class Database
                 }
             }
             
-            System.out.println(questionMessage);
-            List<Integer> permuted = new ArrayList<>(responses.keySet());
-            Collections.shuffle(permuted);
-            char option = 'A';
-            for (int index : permuted)
-            {
-                System.out.println(""+option+". "+responses.get(index));
-                option++;
-            }
-            int chosenResponse = permuted.get((int)(readUserChar(permuted)-'A'));
-            
+            return new Question(questionID,questionMessage,nextQuestionID,responses);
+        }
+        catch (SQLException e)
+        {
+            throw new RuntimeException("Error accessing database question number "+questionID);
+        }
+    }
+    
+    void respondToQuestion(int questionID, int chosenResponse)
+    {
+        try
+        {
             PreparedStatement insertComplete = conn.prepareStatement(
                     "INSERT INTO CompletedQuestion (GameID, CompletedQ, Result) "
                   + "VALUES (?,?,?)");
@@ -171,32 +176,14 @@ public class Database
             insertComplete.setInt(2, questionID);
             insertComplete.setInt(3, chosenResponse);
             insertComplete.executeUpdate();
-            
-            return nextQuestionID;
         }
         catch (SQLException e)
         {
-            throw new RuntimeException("Error accessing database question number "+questionID);
-        }
-    }
-    
-    private char readUserChar(List<Integer> permuted)
-    {
-        Scanner in = new Scanner(System.in);
-        String userEntry = in.nextLine();
-        while (userEntry.length()==0) 
-            userEntry = in.nextLine();
-        char userOption = Character.toUpperCase(userEntry.charAt(0));
-        if ((userOption>='A') && (userOption<'A'+permuted.size()))
-            return userOption;
-        else
-        {
-            System.out.println("Please enter a choice between A and "+('A'+permuted.size()-1));
-            return readUserChar(permuted);
+            throw new RuntimeException("Error updating database for question response "+questionID);
         }
     }
 
-    void displayResult()
+    Result getResult()
     {
         try
         {
@@ -232,15 +219,27 @@ public class Database
                 else
                     throw new RuntimeException("Error accessing database result "+maxResult);
             }
-            System.out.println(resultMessage);
             
+            return new Result(maxResult, resultMessage);
+        }
+        catch (SQLException e)
+        {
+            System.out.println(e);
+            throw new RuntimeException("Error accessing database for final result.");
+        }
+    }
+    
+    void completeGame(int resultID)
+    {
+        try
+        {
             PreparedStatement gameComplete = conn.prepareStatement(
                     "INSERT INTO CompletedGame (ID, IPAddr, Result) "
                   + "VALUES (?,?,?)");
             gameComplete.clearParameters();
             gameComplete.setInt(1, this.playerID);
             gameComplete.setString(2, this.playerIP);
-            gameComplete.setInt(3, maxResult);
+            gameComplete.setInt(3, resultID);
             gameComplete.executeUpdate();
 
             PreparedStatement deleteIncomplete = conn.prepareStatement(
@@ -253,13 +252,12 @@ public class Database
         catch (SQLException e)
         {
             System.out.println(e);
-            throw new RuntimeException("Error accessing database for final result.");
+            throw new RuntimeException("Error updating database for completing game.");
         }
     }
 
-    int checkForIncompleteGame(String ip)
+    Question checkForIncompleteGame()
     {
-        this.playerIP = ip;
         try
         {
             PreparedStatement incompleteGames = conn.prepareStatement(
@@ -271,8 +269,8 @@ public class Database
                   + "  FROM CompletedGame "
                   + "  WHERE IPAddr = ?)");
             incompleteGames.clearParameters();
-            incompleteGames.setString(1, ip);
-            incompleteGames.setString(2, ip);
+            incompleteGames.setString(1, playerIP);
+            incompleteGames.setString(2, playerIP);
             int gameID;
             try (ResultSet resultResult = incompleteGames.executeQuery())
             {
@@ -283,7 +281,7 @@ public class Database
             }
             
             if (gameID < 0)
-                return -1;
+                return null;
             else
                 this.playerID = gameID;
             
@@ -311,11 +309,16 @@ public class Database
                 else
                     nextQuestion = -1;
             }
+            
+            //An empty result set can mean one of two things:
+            //1. All the questions were completed (but the game was not completed for some reason).
+            //2. None of the questions were completed.
+            //Since #1 should never happen, we will assume it's #2 and just start the game over.
 
             if (nextQuestion < 0)
-                return askFirstQuestion();
+                return this.getFirstQuestion();
             else
-                return nextQuestion;
+                return this.getNextQuestion(nextQuestion);
         }
         catch (SQLException e)
         {
