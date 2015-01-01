@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Dec 29, 2014 at 02:36 PM
+-- Generation Time: Jan 01, 2015 at 04:49 PM
 -- Server version: 5.6.22
 -- PHP Version: 5.5.14
 
@@ -28,8 +28,6 @@ SET time_zone = "+00:00";
 
 CREATE TABLE IF NOT EXISTS `CompletedGame` (
   `ID` int(11) NOT NULL,
-  `FBID` int(11) DEFAULT NULL,
-  `IPAddr` varchar(255) DEFAULT NULL,
   `Date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `Result` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
@@ -46,20 +44,7 @@ CREATE TABLE IF NOT EXISTS `CompletedQuestion` (
   `DatePlayed` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `CompletedQ` int(11) NOT NULL,
   `Result` int(11) DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- Table structure for table `IncompleteGame`
---
-
-CREATE TABLE IF NOT EXISTS `IncompleteGame` (
-  `ID` int(11) NOT NULL,
-  `FBID` int(11) DEFAULT NULL,
-  `IPAddr` varchar(255) DEFAULT NULL,
-  `Date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -73,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `Question` (
   `Text` varchar(511) NOT NULL,
   `Pts` int(11) NOT NULL,
   `Next` int(11) DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8;
 
 --
 -- Dumping data for table `Question`
@@ -148,6 +133,19 @@ INSERT INTO `Result` (`ID`, `Name`, `Text`, `Image`) VALUES
 (3, 'GameOver', 'You try every skill you have in your battle against the dragon, but it just wasn''t enough. You have not been brave in the past, and this dragon has you quaking in your boots. You try to get away but the dragon is too fast for you. He swallows you in two bites.', NULL),
 (4, 'Wizard', 'You try every skill you have in your battle against the dragon, and you are successful! Your magical abilities and arcane knowledge have become the most important skills you possess. The elements come at your command, and the water and ice swirl around the dragon. Soon he is encased in ice, and you are free! Congratulations, Wizard!', NULL);
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `StartedGame`
+--
+
+CREATE TABLE IF NOT EXISTS `StartedGame` (
+  `ID` int(11) NOT NULL,
+  `FBID` int(11) DEFAULT NULL,
+  `IPAddr` varchar(255) DEFAULT NULL,
+  `Date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
+
 --
 -- Indexes for dumped tables
 --
@@ -163,12 +161,6 @@ ALTER TABLE `CompletedGame`
 --
 ALTER TABLE `CompletedQuestion`
   ADD PRIMARY KEY (`ID`), ADD KEY `GameID` (`GameID`);
-
---
--- Indexes for table `IncompleteGame`
---
-ALTER TABLE `IncompleteGame`
-  ADD PRIMARY KEY (`ID`);
 
 --
 -- Indexes for table `Question`
@@ -189,6 +181,12 @@ ALTER TABLE `Result`
   ADD PRIMARY KEY (`ID`);
 
 --
+-- Indexes for table `StartedGame`
+--
+ALTER TABLE `StartedGame`
+  ADD PRIMARY KEY (`ID`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -196,31 +194,37 @@ ALTER TABLE `Result`
 -- AUTO_INCREMENT for table `CompletedQuestion`
 --
 ALTER TABLE `CompletedQuestion`
-  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=34;
---
--- AUTO_INCREMENT for table `IncompleteGame`
---
-ALTER TABLE `IncompleteGame`
-  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=4;
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=20;
 --
 -- AUTO_INCREMENT for table `Question`
 --
 ALTER TABLE `Question`
-  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=7;
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=8;
 --
 -- AUTO_INCREMENT for table `Result`
 --
 ALTER TABLE `Result`
   MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=5;
 --
+-- AUTO_INCREMENT for table `StartedGame`
+--
+ALTER TABLE `StartedGame`
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=14;
+--
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `CompletedGame`
+--
+ALTER TABLE `CompletedGame`
+ADD CONSTRAINT `completedgame_ibfk_1` FOREIGN KEY (`ID`) REFERENCES `StartedGame` (`ID`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `CompletedQuestion`
 --
 ALTER TABLE `CompletedQuestion`
-ADD CONSTRAINT `completedquestion_ibfk_1` FOREIGN KEY (`GameID`) REFERENCES `IncompleteGame` (`ID`) ON DELETE CASCADE ON UPDATE CASCADE;
+ADD CONSTRAINT `completedquestion_ibfk_1` FOREIGN KEY (`GameID`) REFERENCES `StartedGame` (`ID`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Constraints for table `QuestionResponse`

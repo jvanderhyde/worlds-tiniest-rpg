@@ -1,1 +1,1 @@
-<?PHP echo $_SERVER['REMOTE_ADDR'] ?>
+<?PHP echo filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP); ?>

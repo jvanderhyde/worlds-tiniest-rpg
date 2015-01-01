@@ -59,7 +59,7 @@ public class Database
         try
         {
             PreparedStatement p = conn.prepareStatement(
-                    "INSERT INTO IncompleteGame (IPAddr) "
+                    "INSERT INTO StartedGame (IPAddr) "
                   + "VALUES (?)",Statement.RETURN_GENERATED_KEYS);
             p.clearParameters();
             p.setString(1, playerIP);
@@ -234,17 +234,16 @@ public class Database
         try
         {
             PreparedStatement gameComplete = conn.prepareStatement(
-                    "INSERT INTO CompletedGame (ID, IPAddr, Result) "
-                  + "VALUES (?,?,?)");
+                    "INSERT INTO CompletedGame (ID, Result) "
+                  + "VALUES (?,?)");
             gameComplete.clearParameters();
             gameComplete.setInt(1, this.playerID);
-            gameComplete.setString(2, this.playerIP);
-            gameComplete.setInt(3, resultID);
+            gameComplete.setInt(2, resultID);
             gameComplete.executeUpdate();
 
             PreparedStatement deleteIncomplete = conn.prepareStatement(
-                    "DELETE FROM IncompleteGame "
-                  + "WHERE ID = ?");
+                    "DELETE FROM CompletedQuestion "
+                  + "WHERE GameID = ?");
             deleteIncomplete.clearParameters();
             deleteIncomplete.setInt(1, this.playerID);
             deleteIncomplete.executeUpdate();
@@ -262,7 +261,7 @@ public class Database
         {
             PreparedStatement incompleteGames = conn.prepareStatement(
                     "SELECT ID "
-                  + "FROM IncompleteGame "
+                  + "FROM StartedGame "
                   + "WHERE IPAddr = ? "
                   + "AND ID NOT IN "
                   + " (SELECT ID "
