@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Jan 01, 2015 at 04:49 PM
+-- Generation Time: Jan 01, 2015 at 10:52 PM
 -- Server version: 5.6.22
 -- PHP Version: 5.5.14
 
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS `CompletedQuestion` (
   `DatePlayed` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `CompletedQ` int(11) NOT NULL,
   `Result` int(11) DEFAULT NULL
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=65 DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -128,10 +128,10 @@ CREATE TABLE IF NOT EXISTS `Result` (
 --
 
 INSERT INTO `Result` (`ID`, `Name`, `Text`, `Image`) VALUES
-(1, 'Strategist', 'You try every skill you have in your battle against the dragon, and you are successful! Your finesse and strategy have come to full fruition and you manage to lure the dragon into a carefully set trap. The dragon is caught and you are free! Congratulations, Strategist!', NULL),
-(2, 'Swordsman', 'You try every skill you have in your battle against the dragon, and you are successful! Your strength and sword skills are unmatched, and you are able to deal the deathblow directly to the dragon''s heart. Congratulations, Swordsman!', NULL),
-(3, 'GameOver', 'You try every skill you have in your battle against the dragon, but it just wasn''t enough. You have not been brave in the past, and this dragon has you quaking in your boots. You try to get away but the dragon is too fast for you. He swallows you in two bites.', NULL),
-(4, 'Wizard', 'You try every skill you have in your battle against the dragon, and you are successful! Your magical abilities and arcane knowledge have become the most important skills you possess. The elements come at your command, and the water and ice swirl around the dragon. Soon he is encased in ice, and you are free! Congratulations, Wizard!', NULL);
+(1, 'Strategist', 'You try every skill you have in your battle against the dragon, and you are successful! Your finesse and strategy have come to full fruition and you manage to lure the dragon into a carefully set trap. The dragon is caught and you are free! Congratulations, Strategist!', 'Strategist.jpg'),
+(2, 'Swordsman', 'You try every skill you have in your battle against the dragon, and you are successful! Your strength and sword skills are unmatched, and you are able to deal the deathblow directly to the dragon''s heart. Congratulations, Swordsman!', 'Swordsman.jpg'),
+(3, 'GameOver', 'You try every skill you have in your battle against the dragon, but it just wasn''t enough. You have not been brave in the past, and this dragon has you quaking in your boots. You try to get away but the dragon is too fast for you. He swallows you in two bites.', 'GameOver.jpg'),
+(4, 'Wizard', 'You try every skill you have in your battle against the dragon, and you are successful! Your magical abilities and arcane knowledge have become the most important skills you possess. The elements come at your command, and the water and ice swirl around the dragon. Soon he is encased in ice, and you are free! Congratulations, Wizard!', 'Wizard.jpg');
 
 -- --------------------------------------------------------
 
@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS `StartedGame` (
   `FBID` int(11) DEFAULT NULL,
   `IPAddr` varchar(255) DEFAULT NULL,
   `Date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8;
 
 --
 -- Indexes for dumped tables
@@ -194,7 +194,7 @@ ALTER TABLE `StartedGame`
 -- AUTO_INCREMENT for table `CompletedQuestion`
 --
 ALTER TABLE `CompletedQuestion`
-  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=20;
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=65;
 --
 -- AUTO_INCREMENT for table `Question`
 --
@@ -209,7 +209,7 @@ ALTER TABLE `Result`
 -- AUTO_INCREMENT for table `StartedGame`
 --
 ALTER TABLE `StartedGame`
-  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=14;
+  MODIFY `ID` int(11) NOT NULL AUTO_INCREMENT,AUTO_INCREMENT=25;
 --
 -- Constraints for dumped tables
 --

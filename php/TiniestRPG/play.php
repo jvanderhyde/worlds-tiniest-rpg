@@ -28,8 +28,6 @@ if ($conn->connect_error)
 {
     die("Connection failed: " . $conn->connect_error);
 } 
-echo "Connection to database established." . "<br/>";
-echo $prevquestion . " " . $response  . "<br/>";
 
 if ($prevquestion != -1 && $response != -1)
 {
@@ -81,7 +79,6 @@ while ($row = $dbresult2->fetch_assoc())
 $stmt2->close();
 
 $conn->close();
-echo "Database connection closed." . "<br/>";
 
 //Display question text
 echo "<p>" . $questionMessage . "</p>";

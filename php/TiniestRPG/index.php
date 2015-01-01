@@ -9,16 +9,15 @@
         <title>World's Tiniest RPG</title>
     </head>
     <body>
+        <img src="images/MainCharacter.jpg"/>
 <?php
 $playerIP = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
-echo $playerIP . "<br/>";
 
 $conn = new mysqli("localhost", "tiny", "N2VnVLPvrnqfGj7x", "TINYRPG");
 if ($conn->connect_error)
 {
     die("Connection failed: " . $conn->connect_error);
 } 
-echo "Connection to database established." . "<br/>";
 
 //Check for existing game from this IP.
 $stmt = $conn->stmt_init();
@@ -120,7 +119,6 @@ else
 }
 
 $conn->close();
-echo "Database connection closed." . "<br/>";
 
 //Display a form to start the next question
 ?>

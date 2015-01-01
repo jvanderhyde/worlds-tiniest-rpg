@@ -25,7 +25,6 @@ if ($conn->connect_error)
 {
     die("Connection failed: " . $conn->connect_error);
 } 
-echo "Connection to database established." . "<br/>";
 
 if ($prevquestion != -1 && $response != -1)
 {
@@ -101,10 +100,9 @@ $stmt4->close();
 
 //Display result
 echo "<p>" . $resulttext . "</p>";
-echo '<img src="' . $resultimage . '"/>';
+echo '<img src="images/' . $resultimage . '"/>';
 
 $conn->close();
-echo "Database connection closed." . "<br/>";
 ?>
     </body>
 </html>
