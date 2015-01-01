@@ -13,11 +13,11 @@
 
 //Get form values
 $options=array('options'=>array('default'=>-1));
-$playerID = filter_input(INPUT_POST, 'player', FILTER_VALIDATE_INT, $options);
+$playerid = filter_input(INPUT_POST, 'player', FILTER_VALIDATE_INT, $options);
 $prevquestion = filter_input(INPUT_POST, 'previous', FILTER_VALIDATE_INT, $options);
 $response = filter_input(INPUT_POST, 'response', FILTER_VALIDATE_INT, $options);
 
-if ($playerID==-1)
+if ($playerid==-1)
     die("No player specified.");
 
 $conn = new mysqli("localhost", "tiny", "N2VnVLPvrnqfGj7x", "TINYRPG");
@@ -30,14 +30,78 @@ echo "Connection to database established." . "<br/>";
 if ($prevquestion != -1 && $response != -1)
 {
     //Record response in database
+    $stmt = $conn->stmt_init();
+    $stmt->prepare(
+            "INSERT INTO CompletedQuestion (GameID, CompletedQ, Result) "
+          . "VALUES (?,?,?)");
+    $stmt->bind_param("iii", $playerid, $prevquestion, $response);
+    $stmt->execute();
+    $stmt->close();
 }
 
 //Calculate result
+$stmt1 = $conn->stmt_init();
+$stmt1->prepare(
+        "SELECT Result, SUM(Pts) AS TotalPts " .
+        "FROM CompletedQuestion AS C, Question AS Q " .
+        "WHERE C.GameID = ? " .
+        "AND CompletedQ = Q.ID " .
+        "GROUP BY Result " .
+        "ORDER BY TotalPts DESC");
+$stmt1->bind_param("i", $playerid);
+$stmt1->execute();
+$dbresult1 = $stmt1->get_result();
+if ($dbresult1->num_rows > 0)
+{
+    $row = $dbresult1->fetch_assoc();
+    $playerresult = $row["Result"];
+}
+else
+{
+    die("Error accessing database: no results.");
+}
+$stmt1->close();
 
-//Display result
+//Look up result
+$stmt2 = $conn->stmt_init();
+$stmt2->prepare(
+        "SELECT Text, Image " .
+        "FROM Result " .
+        "WHERE ID = ? ");
+$stmt2->bind_param("i", $playerresult);
+$stmt2->execute();
+$dbresult2 = $stmt2->get_result();
+if ($dbresult2->num_rows > 0)
+{
+    $row = $dbresult2->fetch_assoc();
+    $resulttext = $row["Text"];
+    $resultimage = $row["Image"];
+}
+else
+{
+    die("Error accessing database result " . $playerresult);
+}
+$stmt2->close();
 
 //Record completed game
+$stmt3 = $conn->stmt_init();
+$stmt3->prepare(
+        "INSERT INTO CompletedGame (ID, Result) "
+      . "VALUES (?,?)");
+$stmt3->bind_param("ii", $playerid, $playerresult);
+$stmt3->execute();
+$stmt3->close();
+$stmt4 = $conn->stmt_init();
+$stmt4->prepare(
+        "DELETE FROM CompletedQuestion "
+      . "WHERE GameID = ?");
+$stmt4->bind_param("i", $playerid);
+$stmt4->execute();
+$stmt4->close();
 
+//Display result
+echo "<p>" . $resulttext . "</p>";
+echo '<img src="' . $resultimage . '"/>';
 
 $conn->close();
 echo "Database connection closed." . "<br/>";
