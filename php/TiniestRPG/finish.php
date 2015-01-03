@@ -9,6 +9,7 @@
         <title>World's Tiniest RPG</title>
     </head>
     <body>
+        <div style="width: 450px; margin-left: auto; margin-right: auto;">
 <?php
 
 //Get form values
@@ -98,11 +99,14 @@ $stmt4->bind_param("i", $playerid);
 $stmt4->execute();
 $stmt4->close();
 
-//Display result
-echo "<p>" . $resulttext . "</p>";
-echo '<img src="images/' . $resultimage . '"/>';
-
 $conn->close();
+
+//Display result in HTML
 ?>
+            <p><?php echo $resulttext; ?></p>
+            <p style="text-align: center">
+                <img src="images/<?php echo $resultimage; ?>"/>
+            </p>
+        </div>
     </body>
 </html>

@@ -9,7 +9,11 @@
         <title>World's Tiniest RPG</title>
     </head>
     <body>
-        <img src="images/MainCharacter.jpg"/>
+        <div style="width: 450px; margin-left: auto; margin-right: auto;">
+            <p style="text-align: center">
+                <img src="images/MainCharacter.jpg"/>
+            </p>
+            
 <?php
 $playerIP = filter_input(INPUT_SERVER, 'REMOTE_ADDR', FILTER_VALIDATE_IP);
 
@@ -122,11 +126,11 @@ $conn->close();
 
 //Display a form to start the next question
 ?>
-        <form action="play.php" method="post">
-            <input type="submit" value="Start your quest!">
-            <input type="hidden" name="player" value="<?php echo $playerid; ?>">
-            <input type="hidden" name="question" value="<?php echo $nextquestion; ?>">
-        </form>
-        
+            <form action="play.php" method="post">
+                <input type="submit" value="Start your quest!">
+                <input type="hidden" name="player" value="<?php echo $playerid; ?>">
+                <input type="hidden" name="question" value="<?php echo $nextquestion; ?>">
+            </form>
+        </div>    
     </body>
 </html>

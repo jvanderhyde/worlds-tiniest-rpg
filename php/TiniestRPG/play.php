@@ -9,6 +9,7 @@
         <title>World's Tiniest RPG</title>
     </head>
     <body>
+        <div style="width: 450px; margin-left: auto; margin-right: auto;">
 <?php
 
 //Get form values
@@ -102,10 +103,11 @@ foreach ($keys as $index)
 }
 
 ?>
-            <input type="submit" value="Select">
-            <input type="hidden" name="player" value="<?php echo $playerid; ?>">
-            <input type="hidden" name="previous" value="<?php echo $question; ?>">
-            <input type="hidden" name="question" value="<?php echo $nextquestion; ?>">
-        </form>
+                <input type="submit" value="Select">
+                <input type="hidden" name="player" value="<?php echo $playerid; ?>">
+                <input type="hidden" name="previous" value="<?php echo $question; ?>">
+                <input type="hidden" name="question" value="<?php echo $nextquestion; ?>">
+            </form>
+        </div>
     </body>
 </html>
