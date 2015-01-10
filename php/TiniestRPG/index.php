@@ -7,8 +7,9 @@
     <head>
         <meta charset="UTF-8">
         <title>World's Tiniest RPG</title>
+        <link rel="stylesheet" type="text/css" media="screen,print" href="oldpaper.css">
     </head>
-    <body>
+    <body style="background-color: rgb(255, 255, 255);">
         <div style="width: 450px; margin-left: auto; margin-right: auto;">
             <p style="text-align: center">
                 <img src="images/MainCharacter.jpg"/>

@@ -7,6 +7,7 @@
     <head>
         <meta charset="UTF-8">
         <title>World's Tiniest RPG</title>
+        <link rel="stylesheet" type="text/css" media="screen,print" href="oldpaper.css">
     </head>
     <body>
         <div style="width: 450px; margin-left: auto; margin-right: auto;">

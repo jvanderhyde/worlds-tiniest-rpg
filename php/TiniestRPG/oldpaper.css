@@ -1,0 +1,14 @@
+/* 
+    Created on : Jan 10, 2015, 4:21:14 PM
+    Author     : James Vanderhyde
+*/
+
+body
+{ 
+    background-color: rgb(247, 246, 226);
+}
+p
+{
+    color: rgb(80, 80, 77);
+    font-family: 'HoeflerText-Regular', 'Hoefler Text', 'Times New Roman', serif;
+}

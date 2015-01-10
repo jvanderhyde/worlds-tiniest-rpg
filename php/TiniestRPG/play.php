@@ -7,6 +7,7 @@
     <head>
         <meta charset="UTF-8">
         <title>World's Tiniest RPG</title>
+        <link rel="stylesheet" type="text/css" media="screen,print" href="oldpaper.css">
     </head>
     <body>
         <div style="width: 450px; margin-left: auto; margin-right: auto;">
@@ -121,6 +122,7 @@ if ($nextquestion === NULL)
     echo '<form action="finish.php" method="post">';
 else
     echo '<form action="play.php" method="post">';
+echo "<p>";
 
 //Randomize and display the responses
 $keys = array_keys($responses);
@@ -133,6 +135,7 @@ foreach ($keys as $index)
     echo $responses[$index];
     echo '<br>';
 }
+echo "</p>";
 
 ?>
                 <input type="submit" value="Select">
