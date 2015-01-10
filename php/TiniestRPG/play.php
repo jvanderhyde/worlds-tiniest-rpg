@@ -15,7 +15,6 @@
 //Get form values
 $options=array('options'=>array('default'=>-1));
 $playerid = filter_input(INPUT_POST, 'player', FILTER_VALIDATE_INT, $options);
-$question = filter_input(INPUT_POST, 'question', FILTER_VALIDATE_INT, $options);
 $prevquestion = filter_input(INPUT_POST, 'previous', FILTER_VALIDATE_INT, $options);
 $response = filter_input(INPUT_POST, 'response', FILTER_VALIDATE_INT, $options);
 
@@ -42,26 +41,59 @@ if ($prevquestion != -1 && $response != -1)
     $stmt->close();
 }
 
-//Load question from database
-$stmt1 = $conn->stmt_init();
-$stmt1->prepare(
-        "SELECT Text, Next "
-      . "FROM Question "
-      . "WHERE ID = ? ");
-$stmt1->bind_param("i", $question);
-$stmt1->execute();
-$dbresult1 = $stmt1->get_result();
-if ($dbresult1->num_rows > 0)
+//Look up next unanswered question.
+$stmt3 = $conn->stmt_init();
+$stmt3->prepare(
+        "SELECT ID, Text, Next " .
+        "FROM Question " .
+        "WHERE ID NOT IN " .
+        " (SELECT Q.ID " .
+        "  FROM CompletedQuestion AS C, Question AS Q " .
+        "  WHERE C.GameID = ? " .
+        "  AND CompletedQ = Q.ID) " .
+        "AND ID IN " .
+        " (SELECT Q.Next " .
+        "  FROM CompletedQuestion AS C, Question AS Q " .
+        "  WHERE C.GameID = ? " .
+        "  AND CompletedQ = Q.ID)");
+$stmt3->bind_param("ii", $playerid, $playerid);
+$stmt3->execute();
+$dbresult3 = $stmt3->get_result();
+if ($dbresult3->num_rows > 0)
 {
-    $row = $dbresult1->fetch_assoc();
+    $row = $dbresult3->fetch_assoc();
+    $question = $row["ID"];
     $questionMessage = $row["Text"];
     $nextquestion = $row["Next"];
 }
 else
 {
-    die("Error accessing database question " . $question);
+    //An empty result set can mean one of two things:
+    //1. All the questions were completed (but the game was not completed for some reason).
+    //2. None of the questions were completed.
+    //Since #1 should never happen, we will assume it's #2 and just start with the first question.
+    $stmt1 = $conn->stmt_init();
+    $stmt1->prepare(
+            "SELECT N.ID, N.Text, N.Next "
+          . "FROM Question AS Q, Question AS N "
+          . "WHERE Q.Name = 'INTRO' "
+          . "AND Q.Next = N.ID");
+    $stmt1->execute();
+    $dbresult1 = $stmt1->get_result();
+    if ($dbresult1->num_rows > 0)
+    {
+        $row = $dbresult1->fetch_assoc();
+        $question = $row["ID"];
+        $questionMessage = $row["Text"];
+        $nextquestion = $row["Next"];
+    }
+    else
+    {
+        die("Error in database: missing INTRO text.");
+    }
+    $stmt1->close();
 }
-$stmt1->close();
+$stmt3->close();
 
 //Load responses from database
 $responses = array();
@@ -106,7 +138,6 @@ foreach ($keys as $index)
                 <input type="submit" value="Select">
                 <input type="hidden" name="player" value="<?php echo $playerid; ?>">
                 <input type="hidden" name="previous" value="<?php echo $question; ?>">
-                <input type="hidden" name="question" value="<?php echo $nextquestion; ?>">
             </form>
         </div>
     </body>

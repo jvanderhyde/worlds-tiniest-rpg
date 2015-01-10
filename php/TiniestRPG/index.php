@@ -38,47 +38,17 @@ $stmt->execute();
 $dbresult = $stmt->get_result();
 if ($dbresult->num_rows > 0)
 {
-    //Found existing incomplete game. Look up next unanswered question.
+    //Found existing incomplete game.
     $row = $dbresult->fetch_assoc();
     $playerid = $row["ID"];
-    
     $stmt->close();
-    $stmt = $conn->stmt_init();
-    $stmt->prepare(
-            "SELECT ID " .
-            "FROM Question " .
-            "WHERE ID NOT IN " .
-            " (SELECT Q.ID " .
-            "  FROM CompletedQuestion AS C, Question AS Q " .
-            "  WHERE C.GameID = ? " .
-            "  AND CompletedQ = Q.ID) " .
-            "AND ID IN " .
-            " (SELECT Q.Next " .
-            "  FROM CompletedQuestion AS C, Question AS Q " .
-            "  WHERE C.GameID = ? " .
-            "  AND CompletedQ = Q.ID)");
-    $stmt->bind_param("ii", $playerid, $playerid);
-    $stmt->execute();
-    $dbresult = $stmt->get_result();
-    if ($dbresult->num_rows > 0)
-    {
-        $row = $dbresult->fetch_assoc();
-        $nextquestion = $row["ID"];
-    }
-    else
-    {
-        //An empty result set can mean one of two things:
-        //1. All the questions were completed (but the game was not completed for some reason).
-        //2. None of the questions were completed.
-        //Since #1 should never happen, we will assume it's #2 and just start with the first question.
-        $nextquestion = -1;
-    }
-    $stmt->close();
+    $gameexists = true;
 }
 else
 {
     //No existing game, so create a new game.
     $stmt->close();
+    $gameexists = false;
     $stmt = $conn->stmt_init();
     $stmt->prepare(
             "INSERT INTO StartedGame (IPAddr) "
@@ -87,17 +57,20 @@ else
     $stmt->execute();
     $playerid = $stmt->insert_id;
     $stmt->close();
-    
-    //Start with first question
-    $nextquestion = -1;
 }
 
-if ($nextquestion == -1)
+if ($gameexists)
 {
-    //Load the first question from the database
+    //Continue existing game
+    echo "<p>Welcome back! You may continue on your quest.</p>";
+    $buttontext = "Continue";
+}
+else
+{
+    //Load the intro from the database
     $stmt = $conn->stmt_init();
     $stmt->prepare(
-            "SELECT Text, Next "
+            "SELECT Text "
           . "FROM Question "
           . "WHERE Name = 'INTRO' ");
     $stmt->execute();
@@ -106,7 +79,6 @@ if ($nextquestion == -1)
     {
         $row = $dbresult->fetch_assoc();
         $introText = $row["Text"];
-        $nextquestion = $row["Next"];
     }
     else
     {
@@ -115,11 +87,7 @@ if ($nextquestion == -1)
 
     //Display the introductory text
     echo "<p>" . $introText . "</p>";
-}
-else
-{
-    //Continue existing game
-    echo "<p>Welcome back! You may continue on your quest.</p>";
+    $buttontext = "Start your quest!";
 }
 
 $conn->close();
@@ -127,9 +95,8 @@ $conn->close();
 //Display a form to start the next question
 ?>
             <form action="play.php" method="post">
-                <input type="submit" value="Start your quest!">
+                <input type="submit" value="<?php echo $buttontext; ?>">
                 <input type="hidden" name="player" value="<?php echo $playerid; ?>">
-                <input type="hidden" name="question" value="<?php echo $nextquestion; ?>">
             </form>
         </div>    
     </body>
